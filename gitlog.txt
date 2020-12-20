@@ -1,4 +1,12 @@
-2020-12-19-0.35
+2020-12-19->0.36
+- best choice will be made among the shortest vks. At beginning it is 3-bits,
+  but down the tree 1,2 are preferred.
+- before making choice among vk1s, check if they cover totality
+  totality means: among the 1 bit vk, there exist two sitting on the same bit,
+  with opposite values(0 and 1)
+- if branch has totality, of spawned no children, it is renamed 'finished',
+  and it is removed from parent's children-dic
+2020-12-19->0.35
 - based on solver7/0.34
 2020-12-18->0.34
 - Sat.nov class var holding nov. In Sat.verify looping thru vks, make

@@ -27,6 +27,11 @@ class Branch:
             self.nov3()
         else:
             kn, knset, notouchset = self.init_bitdic.best_choice()
+            if not kn:  # vk1 vks have totality of coverage
+                self.name = 'finished'
+                del self.parent.children[self.valkey]
+                return
+
             self.base_vk = self.init_bitdic.vkdic[kn]
             if self.base_vk.get_topbits() != self.base_vk.bits:
                 self.tx = TxEngine(self.name, self.base_vk,
@@ -56,9 +61,12 @@ class Branch:
                 vkd[kn] = vkdic[kn].clone(self.topbits)
             for kn in knset:
                 vrng, outdic = topbits_coverages(vkdic[kn], self.topbits)
-                if ind in vrng:         # if len(vrng)==1 and ind == vrng[0]
-                    if len(vrng) == 1:  # then this kn covers all child-values
+                if ind in vrng:
+                    # if len(vrng)==1 and ind == vrng[0], and outdic empty
+                    # then this kn covers all child-values
+                    if len(vrng) == 1 and len(outdic) == 0:
                         total_coverage = True
+                        break
                     else:
                         # > 1: partially covered: into child
                         # vkd[kn].dic must be the same as outdic
@@ -70,6 +78,7 @@ class Branch:
                 )
         self.sh.cut_tail(cutn)
         if len(self.children) == 0:
+            self.name = 'finished'
             del self.parent.children[self.valkey]
 
     def nov3(self):

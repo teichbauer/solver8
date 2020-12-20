@@ -32,54 +32,48 @@ class BitDic:
         self.vis = Visualizer(self.vkdic, self.nov)
     # ==== end of def __init__(..)
 
-    def getbest_choice(self):
-        # 1.
-        # make sharebit-dic for every kn: {<kname>:{cnt-dic},...}, where each
-        # cnt-dic: <kname>:{knx: 1, kny:2, knz:3,..}, meaning that the
-        # vk(kname) shares 1-bit with knx, shared 2-bits with kny,
-        # 3 bits with knz. if <sharebit-dic> is empty, vk(kname) has no other
-        # vk that share a bit with it.
-        # if bitdic has 2-bit or 1-bit vk(s) in ordered_vkdic, kname is from
-        # the shortest vk-set: ordered_vkdic[1] or [2], otherwise from [3]
-        # 2.
-        # let makechoice pick the best among them. Return that pick.
-        # -------------------------------
-        sharebit_dic = {}
-        shortest_bitcnt = min(list(self.ordered_vkdic.keys()))
-        kns = self.ordered_vkdic[shortest_bitcnt]
-        # loop thru all bits in self.dic (total: nov-bits) hi-bit -> lo-bit
-        for bit in reversed(list(self.dic.keys())):
-            # collect all knames that have this bit
-            lst = self.dic[bit][:]
-            for kn in lst:
-                if kn in kns:  # only pick kn from shortest-vk's kns
-                    kdic = sharebit_dic.setdefault(kn, {})
-                    for knx in lst:
-                        if knx != kn:
-                            if knx in kdic:
-                                kdic[knx] += 1
-                            else:
-                                kdic[knx] = 1
-        # use the sharebit-dic to make the best choice. choice is a dict
-        # its structure depends on shortest_bitcnt: 1,2 or 3 see makechoice.py
-        kns = self.most_touched()
-        self.choice = make_choice(sharebit_dic, self.vkdic, shortest_bitcnt)
-        return self.choice
-    # ==== end of def most_popular(self, d)
+    def vk1_totality(self, kn1s):  # vkdic1: a vkdic with all 1-bit vks
+        for ind, kn in enumerate(kn1s):
+            bit = self.vkdic[kn].bits[0]
+            # loop thru the rest of kns(k), compare kn and k
+            # if both sit on the same bit(bit == b), and values are opposite
+            # then return this pair -> this ch is done:
+            # remove this child-branch, add it to self.hitdic
+            if ind < (len(kn1s) - 1):
+                for k in kn1s[ind+1:]:
+                    b = self.vkdic[k].bits[0]
+                    if bit == b and \
+                            self.vkdic[kn].dic[bit] != self.vkdic[k].dic[b]:
+                        return [kn, k]
+        return None  # no pair of total cover
 
     def best_choice(self):
         # find which kn touchs the most other kns
         touchdic = {}    # {<cnt>:[kn,kn,..], <cnt>:[...]}
         candidates = {}  # {<kn>:set([kn-touched]),..}
         allknset = set(self.vkdic.keys())
-        for kn, vk in self.vkdic.items():
+
+        shortest_bitcnt = min(list(self.ordered_vkdic.keys()))
+        choices = self.ordered_vkdic[shortest_bitcnt]
+        if shortest_bitcnt == 1:
+            totality = self.vk1_totality(choices)
+            if totality:
+                return None, None, None
+
+        for kn in choices:
             s = set([])
-            for b in vk.bits:
+            for b in self.vkdic[kn].bits:
                 s = s.union(set(self.dic[b]))
             candidates[kn] = s
+
         for kn, s in candidates.items():
             touchdic.setdefault(len(s), []).append(kn)
-        bestkey = max(touchdic.keys())
+
+        tkeys = list(touchdic.keys())
+        if len(tkeys) == 1:
+            bestkey = tkeys[0]
+        else:
+            bestkey = max(tkeys)
         kn = touchdic[bestkey][0]
         touch_set = candidates[kn]
         notouch_set = allknset - touch_set

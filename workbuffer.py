@@ -69,6 +69,8 @@ class WorkBuffer:
             # if itemkey == 'r21' -> 'r2', 1
             parent_node_key, valkey = itemkey[:-1], int(itemkey[-1:])
             parent_br = self.layers[self.lindex() - 1][parent_node_key]
+
+        nitems = []  # collect items of next layer-index(lindex())
         # make branch ->br, on current layer. When being constructed
         # br will resolve some vals into its hitdic, and
         # spawn off its children
@@ -77,17 +79,16 @@ class WorkBuffer:
                     valkey,         # val-index from  parent-br
                     parent_br,      # parent-branch
                     satholder)      # br.sh references satholder
-        self.layers[-1][itemkey] = br
-        if br.sats:
-            print(f'Found sat on {br.name}')
-            sat = self.build_sats(br)
-            return sat
+        if br.name != 'finished':
+            self.layers[-1][itemkey] = br
+            if br.sats:
+                print(f'Found sat on {br.name}')
+                sat = self.build_sats(br)
+                return sat
 
-        nitems = []  # collect items of next layer-index(lindex())
-
-        # loop thru children-bitdics, key(v) being the values of br
-        for v, child in br.children.items():  # child: (bitdic, sh-tail)
-            nitems.append((f'{itemkey}{v}', child[0], SatHolder(chil[1])))
+            # loop thru children-bitdics, key(v) being the values of br
+            for v, child in br.children.items():  # child: (bitdic, sh-tail)
+                nitems.append((f'{itemkey}{v}', child[0], SatHolder(child[1])))
         return nitems
 
     def work_thru(self):
