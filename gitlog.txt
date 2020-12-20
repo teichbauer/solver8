@@ -1,3 +1,7 @@
+2020-12-20->0.37
+- refactored bitdic having new get_choice and best_choice. remove transfer
+- get rid of makechoice.py
+- moving topbits_coverages to basics, get rid of drop_bits
 2020-12-19->0.36
 - best choice will be made among the shortest vks. At beginning it is 3-bits,
   but down the tree 1,2 are preferred.

@@ -1,6 +1,5 @@
-from basics import get_bit, drop_bits, print_json
+from basics import topbits_coverages, get_bit, print_json
 from TransKlauseEngine import TxEngine
-from makechoice import topbits_coverages
 from bitdic import BitDic
 from satholder import SatHolder
 

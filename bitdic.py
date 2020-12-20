@@ -2,7 +2,6 @@ from basics import *
 from vklause import VKlause
 from visualizer import Visualizer
 from TransKlauseEngine import TxEngine
-from makechoice import make_choice
 
 
 def make_vkdic(kdic, nov):
@@ -47,6 +46,56 @@ class BitDic:
                         return [kn, k]
         return None  # no pair of total cover
 
+    def get_choice(self, nob, candikns):
+        # choice: ([<list of kns of total share>],[<list of touched kns>])
+        # a total share kn(of vk)/tsvk: vk shared all its bits with the others
+        # a touched kn(of vk)/tcvk vk that share at least 1 bit with tsvk
+        # return the best: longest tsvk/tcvk
+        best_choice = None
+        max_tsleng = -1
+        max_tcleng = -1
+        for kn in candikns:
+            vk = self.vkdic[kn]
+            # <nob>-many sets. each has kns sharing 1 bit of vk
+            # {<bit>:<set of kns sharing this bit>,..}
+            sh_sets = {}
+            for b in vk.bits:
+                sh_sets[b] = set(self.dic[b])
+            # pop a value of sh_sets: a set of kns
+            tsvk = set(sh_sets.popitem()[1])
+            tcvk = tsvk.copy()
+            for s in sh_sets.values():
+                tsvk = tsvk.intersection(s)
+                tcvk = tcvk.union(s)
+            chc = (tsvk, tcvk)
+            ltsvk = len(tsvk)
+            if ltsvk < max_tsleng:
+                continue
+            ltcvk = len(tcvk)
+            # insert into choices list: bigger front
+            # if equal: dont insert
+            # 1: find index of insertion
+            if not best_choice:
+                best_choice = chc
+                max_tsleng = ltsvk
+                max_tcleng = ltcvk
+            else:
+                replace = False
+                # only compare with 0-th - the longest, since only
+                # the 0-th is chosen: see if to replace that?
+                if best_choice[0] == tsvk:
+                    continue
+                if max_tsleng < ltsvk:
+                    replace = True
+                elif max_tsleng == ltsvk:
+                    if max_tcleng < ltcvk:
+                        replace = True
+                if replace:
+                    best_choice = chc
+                    max_tsleng = ltsvk
+                    max_tcleng = ltcvk
+        return best_choice
+
     def best_choice(self):
         # find which kn touchs the most other kns
         touchdic = {}    # {<cnt>:[kn,kn,..], <cnt>:[...]}
@@ -60,22 +109,10 @@ class BitDic:
             if totality:
                 return None, None, None
 
-        for kn in choices:
-            s = set([])
-            for b in self.vkdic[kn].bits:
-                s = s.union(set(self.dic[b]))
-            candidates[kn] = s
+        choice = self.get_choice(shortest_bitcnt, choices)
 
-        for kn, s in candidates.items():
-            touchdic.setdefault(len(s), []).append(kn)
-
-        tkeys = list(touchdic.keys())
-        if len(tkeys) == 1:
-            bestkey = tkeys[0]
-        else:
-            bestkey = max(tkeys)
-        kn = touchdic[bestkey][0]
-        touch_set = candidates[kn]
+        kn = choice[0].pop()
+        touch_set = choice[1]
         notouch_set = allknset - touch_set
         touch_set.remove(kn)
         return kn, touch_set, notouch_set
@@ -109,14 +146,6 @@ class BitDic:
             return self
     # ==== end of def add_vklause(self, vk=None)
 
-    def transfer(self, vkname):
-        if type(vkname) == type(''):
-            tx = TxEngine(vkname+'-1', self.vkdic[vkname], self.nov)
-        else:
-            tx = vkname
-        nvkdic = tx.trans_vkdic(self.vkdic)
-        return BitDic('new-bitdic', nvkdic, self.nov)
-
     def print_json(self, fname):
         print_json(self.nov, self.vkdic, fname)
 
@@ -129,7 +158,7 @@ if __name__ == '__main__':
     vkdic = make_vkdic(sdic['kdic'], sdic['nov'])
     root = BitDic('n0', vkdic, sdic['nov'])
     tx = TxEngine('C002', vkdic['C002'], sdic['nov'])
-    root1 = root.transfer(tx)
+    root1 = tx.trans_bitdic(root)
     root1.print_json('./configs/config1a.json')
     # res, sat, sat0 = tx.test_me(vkdic)
     x = 1

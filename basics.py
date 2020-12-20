@@ -57,26 +57,30 @@ def print_json(nov, vkdic, fname):
         f.write('    }\n}')
 
 
-def drop_bits(vkdic, bits):
-    ''' bits=[7,5,4] - top-bits to be dropped (must be top ones in vkdic)
-        loop thru every vk, if no bits left(vk empty): put into dropped;
-        if 1,2 or 3 bit remaining: put into nvkdic, among these, if
-        no bit touched by bits(vk.bits remains the same): 
-        put into untouched
-        return 3 dicts and length of bits - all together 4 values
+def topbits_coverages(vk, topbits):
+    ''' example: vk.dic: {7:1, 4:1, 1:0}, topbits:[7,6]. for the 2 bits
+        allvalues: [00,01,10,11]/[0,1,2,3] vk only hit 10/2,11/3, 
+        {4:1, 1:0} lying outside of topbits - outdic: {4:1, 1:0}
+        return [2,3], {4:1, 1:0}
         '''
-    nvkdic = {}  # new dic with every vk dropping bits
-    untouched = {}
-    dropped = {}
-    drop_set = set(bits)
-    for vkn, vk in vkdic.items():
-        s = set(vk.bits)
-        remain_set = s - drop_set
-        if len(remain_set) > 0:
-            nvkdic[vkn] = vk.clone(bits)  # remove the bits and clone
-            if s == remain_set:
-                untouched[vkn] = vk.clone(bits)
-        else:  # len(remain_set) == 0
-            dropped[vkn] = vk
-    # return nvkdic and cnt of dropped bits
-    return untouched, dropped, nvkdic, len(bits)
+    outdic = {}
+    L = len(topbits)
+    allvalues = list(range(2**L))
+    coverage_range = allvalues[:]
+    new_nov = vk.nov - len(topbits)
+
+    dic = {}
+    for b in vk.dic:
+        if b in topbits:
+            dic[b - new_nov] = vk.dic[b]
+        else:
+            outdic[b] = vk.dic[b]
+    for x in allvalues:
+        conflict = False
+        for bit, v in dic.items():
+            if get_bit(x, bit) != v:
+                conflict = True
+                break
+        if conflict:
+            coverage_range.remove(x)
+    return coverage_range, outdic
