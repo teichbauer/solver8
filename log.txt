@@ -1,0 +1,381 @@
+20202-12-11
+LAYERS is a list. the number of element relfects the depth of the tree.
+Each time I process a 3-bits, 2-bits or 1-bit clause-group, will result in a 
+new list-element, I call it a layer element (E). So LAYERS = [E,E1,E2,...]
+Each E is a dict: (I call a BitDic instance a bd). LAYERS starts with
+[{'r': bd}]
+I also have a workbuffer(wb): a list of dict of bds to work thru:
+    { 'depth':<index of Ex in LAYERS-list>,
+      'root-key':<see below>,
+      'val': <int: value-index>,
+      'work': <bitdic to work on>
+    }
+After the bitdic becomes a B(Branch-instance), this dict pops out of wb.
+
+0. Initially, 
+LAYERS = [
+    { 'r':{ 0: <bd>} }      # layer-0
+]
+wb: [
+    (
+        'r',                               # <key-name>,
+        <initial-bitdic>,
+        sh=SatHolder([0,1,2,3,4,5,6,7])    # <satholder>
+    )
+]
+when solver7 runs process(wb), it loops thru wb, crunching all wb[n][1]+[2]
+(here there is only 1 [0] == bitdic), suppose it is a 3-bit clause-grp,
+br created, there will be 8 results. In case of config1.json with 37 clauses, 
+val:[0,2,3,4,7] will be hits, [1,5] will have their bitdics. Now LAYERS:
+
+1. depth == 0, process(wb) will: 
+    a. work thru <initial-bitdic>, generating br with sh. during this, if
+       tx is needed and created, br.sh will call br.sh.transfer(tx) to transfer
+       the br.sh
+    b. wb = [], update [-1] from bd to br
+    c. sh-tail = br.sh.spawn_tail/cut1,2 or 3 bit(base-vk bit number)
+    d. spawning br's children generating 1-th node as below, with sh-tail
+    e. sh under this br will have 1,2 or 3 bit in its varray
+example: sh-head with 3 bits: [4,2,1]. if child of value 5(101) eventually
+resulted with sats, {4:1,2:0,1:1} will join those sats; if child of val=1/001
+resulted with sats, {4:0,2:0,1:1} will join those sats.
+[
+        #--------------- 0-th layer ----------------------------
+    { 'r': {0: br } },              # initial 0-th element.
+    {   #--------------- 1-th layer ----------------------------
+        'r': {
+            0: 'C036',
+            3: 'C011',
+            4: 'C012',
+            (2,6): ('C002', 'C009'),  # 2, 6 covered by C002 and C009
+            7: ('C013', 'C017')       # 7 covered by C013 C017
+            1: (<bd1>,SatHolder(sh-tail))    
+            5: (<bd5>,SatHolder(sh-tail))                  #
+        }
+    }
+]
+Now wb: [
+    ('r1', <bd1>, sh )
+    ('r5', <bd5>, sh )
+]
+
+2. depth == 1, process(wb) will
+    a. work on / loop all <bd1> and <bd5> from the 2 wb elements, 
+       make br1, br5 with sh. If they created their tx(s), apply them to its sh
+    b. wb = [], update LAYERS[1]'s <bd1> to br1, <bd5> to br5
+    c. sh-tail1 = br1.sh.spawn_tail(1), sh-tail5=br5.sh.spawn_tail(1)
+    d. spawning br1 with sh-tail1 and br5 with sh-tail5
+    e. br.sh.cut_tail(1)
+LAYERS[1] =
+    {   #--------------- 1-th node ----------------------------
+        'r': {
+            0: 'C036',
+            3: 'C011',
+            4: 'C012',
+            (2,6): ('C002', 'C009'),  # 2, 6 covered by C002 and C009
+            7: ('C013', 'C017')       # 7 covered by C013 C017
+            1: br1, 
+            5: br5
+        }
+    }
+LAYERS[2] = {
+    'r1': {
+        0: 'C0xx',
+        1: (<bd-r11>, sh-tail1)
+    },
+    'r5': {
+        0: 'C0yy',
+        1: (<bd-r51>,sh-tail5)
+    }
+}
+wb = [
+    ('r11', <bd-r11>, sh-tail1)
+    ('r51', <bd-r51>, sh-tail5)
+]
+3. depth == 2, process(wb) will
+    a. work on <bd-r11> <bd-r5-1> resulting in br-r11, br-r51, with their shs
+    b. wb=[], update 
+        LAYERS[2]['r1'][1] = br-r11
+        LAYERS[2]['r5'][1] = br-r51
+    c. spawning children of these two brs
+    d. generate wb
+LAYERS[2] = {
+    'r1': {
+        0: 'C0xx',
+        1: <br-r11>
+    },
+    'r5': {
+        0: 'C0yy',
+        1: <br-r51>
+    }
+}
+LAYERS[3] = {
+    'r11': {
+        0:(),
+        1: (),
+        2: (<bd-r112>, sh-tail-r11),
+        3: (<bd-r113>, sh-tail-r11)
+    },
+    'r51': {
+        0: (<bd-r510>, sh-tail-r51),
+        1: (),
+        2: (<bd-r512>, sh-tail-r51)
+        3: 'Cxx'
+    }
+}
+wb = [ ?
+    (r112, val: 2 },
+    {depth: 3, root-key: r11, val: 3 },
+    {depth: 3, root-key: r51, val: 0 },
+    {depth: 3, root-key: r51, val: 2 }
+]
+
+
+
+
+2020-12-11
+应该改成如下，因为这样两句都是比喻，而不是：一个以数字，另一个是比喻。
+如镜湖水映月影
+顶上湿云淋浴头
+
+2020-12-02
+刚才，夜间雨中独步近两小时，有感：
+一镜湖水映月影
+顶上湿云淋浴头
+2020-11-28
+Basic train of thought, using config1.json (37 clauses, 8 bits/variables).
+1. After 1st Tx targeted on C002, the first 1/8 of the whole search-space(ss) 
+   can be cut away - these values are negated by C002. 
+
+2. if there is/are other C* that also sit(s) on the same 3 bits as C002, then
+   there will be other 1/8 sub-ss(sss), that are cut away. 
+   In this config1.json/C002 example, I have 3: 
+    C002: {7:0  6:0  5:0 } seed sss = 000 in binary / 0 in decimal ->R0(see 3b.)
+    C009: {7:0  6:1  5:0 }      sss = 010 in binary / 2 in decimal ->R2
+    C013: {7:1  6:1  5:0 }      sss = 110 in binary / 6 in decimal ->R6
+   In the first 3-bits value-space (000-111 in binary terms), 3 values can be
+   cut away: 
+    0: 000  from C002  I call the value-range with 000 as leading bits: R0
+    2: 010  from C009  I call the value-range with 010 as leading bits: R2
+    6: 110  from C013  I call the value-range with 110 as leading bits: R6
+   In the whole ss, the values that have these 3 biary bits as leading bits,
+   can be cut away. So, only the remaining 5 sss need to be investigated.
+
+3. Besides C002, C009, C013 that are done (can be removed from the clauses),
+   there are cluases that:
+   a. not touched in the first 3 bits(bit7, bit6 and bit5):
+        C001: {4:0  3:0  2:0   }
+        C003: {4:0  3:0  1:1   }
+        C008: {4:0  3:0  2:1   }
+        C024: {4:1  1:1  0:0   }
+        C029: {3:1  1:1  0:0   }
+
+   b. have 1 bit in (bit7, bit6 and bit5), 2 bits in the rest of bits(b4-b0).
+      Here Rn following a clause means:
+      example C004, only in R2(010), R3(011), R6(110) and R7(111) need to be 
+      investigated: in these, value-ranges, if bit4 and bit3 is '10****' then, 
+      C004 is hit/blocking. 
+      In other v-ranges like R1, R2, R4 and R5, C004 will never hit - no need to
+      look into.
+
+        --bit- 7--6--5--4--3--2--1--0--
+        C004:     1     1  0                R2, R3, R6, R7
+        C005:        1  0        0          R1, R3, R5, R7
+        C006:  1           0        1       R4, R5, R6, R7
+        C007:        1           1  0       R1, R3, R5, R7
+        C015:  1                 0  1       R4, R5, R6, R7
+        C016:        0  1  0                R0, R2, R4, R6
+        C018:     1           0  1          R2, R3, R6, R7
+        C019:     0           0  1          R0, R1, R4, R5
+        C022:     0              1  1       R0, R1, R4, R5
+        C023:     1              1  0       R2, R3, R6, R7
+        C025:  0        1        1          R0, R1, R2, R3
+        C027:  0           1  1             R0, R1, R2, R3
+        C028:  0           1     0          R0, R1, R2, R3
+        C033:  0           0     1          R0, R1, R2, R3
+        C035:  0              0  1          R0, R1, R2, R3
+    
+    c. have 2 bits in bit7 bit6 bit5, 1 bit in the rest of bits (b4-b0). And,
+       R3, R7 for C010, are the two v-ranges that need to be investigated for 
+       hit/blockage.
+        --bit- 7--6--5--4--3--2--1--0--
+        C010:     1  1              1       R3, R7
+        C011:  1     0           0          R4, R6
+        C012:  0     1           1          R1, R3
+        C014:  1     1  0                   R5, R7
+        C017:     0  0           1          R0, R4
+        C020:  0     0              0       R0, R2
+        C021:  0     1              1       R1, R3
+        C026:  0  1        1                R2, R3
+        C030:  0     0     0                R0, R2
+        C031:  0     0        0             R0, R2
+        C032:  1     1        0             R5, R7
+        C034:  0  1           0             R2, R3
+        C036:  0     1           0          R1, R3
+        C037:     0  1              0       R1, R5
+
+4.  Since R0, R2 and R6 are cut away (by C002, C009, C013), only 
+    R1, R3, R4, R5, R7 need to be investigated. Lets look into R1
+    a. Here are the relevant clauses in R1, with 3, 2 and 1 bit in the b4-b0:
+        C001: {4:0  3:0  2:0   }    3 bits
+        C003: {4:0  3:0  1:1   }    3 bits
+        C005: {5:1  4:0  1:0   }    2 bits
+        C007: {5:1  1:1  0:0   }    2 bits
+        C008: {4:0  3:0  2:1   }    3 bits
+        C012: {7:0  5:1  1:1   }    1 bit
+        C019: {6:0  2:0  1:1   }    2 bits
+        C021: {7:0  5:1  0:1   }    1 bit
+        C022: {6:0  1:1  0:1   }    2 bits
+        C024: {4:1  1:1  0:0   }    3 bits
+        C025: {7:0  4:1  1:1   }    2 bits
+        C027: {7:0  3:1  2:1   }    2 bits
+        C028: {7:0  3:1  1:0   }    2 bits
+        C029: {3:1  1:1  0:0   }    3 bits
+        C033: {7:0  3:0  1:1   }    2 bits
+        C035: {7:0  2:0  1:1   }    2 bits
+        C036: {7:0  5:1  1:0   }    1 bit
+        C037: {6:0  5:1  0:0   }    1 bit
+
+    b. Look at the value-range R1 / ss-R1:
+    ------ 7--6--5--4--3--2--1--0--
+    00032: 0  0  1  0  0  0  0  0 $ C001 C005 C036 C037 
+    00033: 0  0  1  0  0  0  0  1 $ C001 C005 C021 C036 
+    00034: 0  0  1  0  0  0  1  0 $ C001 C003 C007 C012 C019 C033 C035 C037 
+    00035: 0  0  1  0  0  0  1  1 $ C001 C003 C012 C019 C021 C022 C033 C035 
+    00036: 0  0  1  0  0  1  0  0 $ C005 C008 C036 C037 
+    00037: 0  0  1  0  0  1  0  1 $ C005 C008 C021 C036 
+    00038: 0  0  1  0  0  1  1  0 $ C003 C007 C008 C012 C033 C037 
+    00039: 0  0  1  0  0  1  1  1 $ C003 C008 C012 C021 C022 C033 
+    00040: 0  0  1  0  1  0  0  0 $ C005 C028 C036 C037 
+    00041: 0  0  1  0  1  0  0  1 $ C005 C021 C028 C036 
+    00042: 0  0  1  0  1  0  1  0 $ C007 C012 C019 C029 C035 C037 
+    00043: 0  0  1  0  1  0  1  1 $ C012 C019 C021 C022 C035 
+    00044: 0  0  1  0  1  1  0  0 $ C005 C027 C028 C036 C037 
+    00045: 0  0  1  0  1  1  0  1 $ C005 C021 C027 C028 C036 
+    00046: 0  0  1  0  1  1  1  0 $ C007 C012 C027 C029 C037 
+    00047: 0  0  1  0  1  1  1  1 $ C012 C021 C022 C027 
+    00048: 0  0  1  1  0  0  0  0 $ C036 C037 
+    00049: 0  0  1  1  0  0  0  1 $ C021 C036 
+    00050: 0  0  1  1  0  0  1  0 $ C007 C012 C019 C024 C025 C033 C035 C037 
+    00051: 0  0  1  1  0  0  1  1 $ C012 C019 C021 C022 C025 C033 C035 
+    00052: 0  0  1  1  0  1  0  0 $ C036 C037 
+    00053: 0  0  1  1  0  1  0  1 $ C021 C036 
+    00054: 0  0  1  1  0  1  1  0 $ C007 C012 C024 C025 C033 C037 
+    00055: 0  0  1  1  0  1  1  1 $ C012 C021 C022 C025 C033 
+    00056: 0  0  1  1  1  0  0  0 $ C028 C036 C037 
+    00057: 0  0  1  1  1  0  0  1 $ C021 C028 C036 
+    00058: 0  0  1  1  1  0  1  0 $ C007 C012 C019 C024 C025 C029 C035 C037 
+    00059: 0  0  1  1  1  0  1  1 $ C012 C019 C021 C022 C025 C035 
+    00060: 0  0  1  1  1  1  0  0 $ C027 C028 C036 C037 
+    00061: 0  0  1  1  1  1  0  1 $ C021 C027 C028 C036 
+    00062: 0  0  1  1  1  1  1  0 $ C007 C012 C024 C025 C027 C029 C037 
+    00063: 0  0  1  1  1  1  1  1 $ C012 C021 C022 C025 C027 
+
+    Since b7-b5 are always 001 in this R1, I can put them away:
+    -----4--3--2--1--0--
+    032: 0  0  0  0  0 $ C001 C005 C036 C037 
+    032: 0  0  0  0  0 $ C001 C005 C036 C037 
+    033: 0  0  0  0  1 $ C001 C005 C021 C036 
+    033: 0  0  0  0  1 $ C001 C005 C021 C036 
+    034: 0  0  0  1  0 $ C001 C003 C007 C012 C019 C033 C035 C037 
+    034: 0  0  0  1  0 $ C001 C003 C007 C012 C019 C033 C035 C037 
+    035: 0  0  0  1  1 $ C001 C003 C012 C019 C021 C022 C033 C035 
+    035: 0  0  0  1  1 $ C001 C003 C012 C019 C021 C022 C033 C035 
+    036: 0  0  1  0  0 $ C005 C008 C036 C037 
+    036: 0  0  1  0  0 $ C005 C008 C036 C037 
+    037: 0  0  1  0  1 $ C005 C008 C021 C036 
+    037: 0  0  1  0  1 $ C005 C008 C021 C036 
+    038: 0  0  1  1  0 $ C003 C007 C008 C012 C033 C037 
+    038: 0  0  1  1  0 $ C003 C007 C008 C012 C033 C037 
+    039: 0  0  1  1  1 $ C003 C008 C012 C021 C022 C033 
+    039: 0  0  1  1  1 $ C003 C008 C012 C021 C022 C033 
+    040: 0  1  0  0  0 $ C005 C028 C036 C037 
+    040: 0  1  0  0  0 $ C005 C028 C036 C037 
+    041: 0  1  0  0  1 $ C005 C021 C028 C036 
+    041: 0  1  0  0  1 $ C005 C021 C028 C036 
+    042: 0  1  0  1  0 $ C007 C012 C019 C029 C035 C037 
+    042: 0  1  0  1  0 $ C007 C012 C019 C029 C035 C037 
+    043: 0  1  0  1  1 $ C012 C019 C021 C022 C035 
+    043: 0  1  0  1  1 $ C012 C019 C021 C022 C035 
+    044: 0  1  1  0  0 $ C005 C027 C028 C036 C037 
+    044: 0  1  1  0  0 $ C005 C027 C028 C036 C037 
+    045: 0  1  1  0  1 $ C005 C021 C027 C028 C036 
+    045: 0  1  1  0  1 $ C005 C021 C027 C028 C036 
+    046: 0  1  1  1  0 $ C007 C012 C027 C029 C037 
+    046: 0  1  1  1  0 $ C007 C012 C027 C029 C037 
+    047: 0  1  1  1  1 $ C012 C021 C022 C027 
+    047: 0  1  1  1  1 $ C012 C021 C022 C027 
+    048: 1  0  0  0  0 $ C036 C037 
+    048: 1  0  0  0  0 $ C036 C037 
+    049: 1  0  0  0  1 $ C021 C036 
+    049: 1  0  0  0  1 $ C021 C036 
+    050: 1  0  0  1  0 $ C007 C012 C019 C024 C025 C033 C035 C037 
+    050: 1  0  0  1  0 $ C007 C012 C019 C024 C025 C033 C035 C037 
+    051: 1  0  0  1  1 $ C012 C019 C021 C022 C025 C033 C035 
+    051: 1  0  0  1  1 $ C012 C019 C021 C022 C025 C033 C035 
+    052: 1  0  1  0  0 $ C036 C037 
+    052: 1  0  1  0  0 $ C036 C037 
+    053: 1  0  1  0  1 $ C021 C036 
+    053: 1  0  1  0  1 $ C021 C036 
+    054: 1  0  1  1  0 $ C007 C012 C024 C025 C033 C037 
+    054: 1  0  1  1  0 $ C007 C012 C024 C025 C033 C037 
+    055: 1  0  1  1  1 $ C012 C021 C022 C025 C033 
+    055: 1  0  1  1  1 $ C012 C021 C022 C025 C033 
+    056: 1  1  0  0  0 $ C028 C036 C037 
+    056: 1  1  0  0  0 $ C028 C036 C037 
+    057: 1  1  0  0  1 $ C021 C028 C036 
+    057: 1  1  0  0  1 $ C021 C028 C036 
+    058: 1  1  0  1  0 $ C007 C012 C019 C024 C025 C029 C035 C037 
+    058: 1  1  0  1  0 $ C007 C012 C019 C024 C025 C029 C035 C037 
+    059: 1  1  0  1  1 $ C012 C019 C021 C022 C025 C035 
+    059: 1  1  0  1  1 $ C012 C019 C021 C022 C025 C035 
+    060: 1  1  1  0  0 $ C027 C028 C036 C037 
+    060: 1  1  1  0  0 $ C027 C028 C036 C037 
+    061: 1  1  1  0  1 $ C021 C027 C028 C036 
+    061: 1  1  1  0  1 $ C021 C027 C028 C036 
+    062: 1  1  1  1  0 $ C007 C012 C024 C025 C027 C029 C037 
+    062: 1  1  1  1  0 $ C007 C012 C024 C025 C027 C029 C037 
+    063: 1  1  1  1  1 $ C012 C021 C022 C025 C027 
+    063: 1  1  1  1  1 $ C012 C021 C022 C025 C027 
+
+    c. The 4 clauses that have only 1 bit in this ss-R1, each will occupy a 
+    half the the ss-R1. If I do a Tx base on any of there 4 clauses, I will
+    get the first half cut away.
+
+    d. If two of the 1-bit clause are sitting on the same bit, and having the
+    opposite value, as in 
+        C012: {7:0  5:1  1:1   } 
+        C036: {7:0  5:1  1:0   } 
+    This will cover the whole ss-R1: This ss-R1 is done - hit by C012 and C036.
+
+    The same happens in ss-R3(96-127), where there are 21 clauses:
+    C001: {4:0  3:0  2:0   } 3
+    C003: {4:0  3:0  1:1   } 3
+    C004: {6:1  4:1  3:0   } 2
+    C005: {5:1  4:0  1:0   } 2
+    C007: {5:1  1:1  0:0   } 2
+    C008: {4:0  3:0  2:1   } 3
+    C010: {6:1  5:1  0:1   } 1
+    C012: {7:0  5:1  1:1   } 1
+    C018: {6:1  2:0  1:1   } 2
+    C021: {7:0  5:1  0:1   } 1
+    C023: {6:1  1:1  0:0   } 2
+    C024: {4:1  1:1  0:0   } 3
+    C025: {7:0  4:1  1:1   } 2
+    C026: {7:0  6:1  3:1   } 1
+    C027: {7:0  3:1  2:1   } 2
+    C028: {7:0  3:1  1:0   } 2
+    C029: {3:1  1:1  0:0   } 3
+    C033: {7:0  3:0  1:1   } 2
+    C034: {7:0  6:1  2:0   } 1
+    C035: {7:0  2:0  1:1   } 2
+    C036: {7:0  5:1  1:0   } 1
+
+    As can be seen, C012 and C036 both have just 1 bit in b4-b0: b1, and
+    C012 and C036 have diff values on bit-1: 0 and 1 - So the whole ss-R3 is
+    covered by C012 and C036. ss-R3 is hit wholly. Done.
+
+    The same happens on R4, with
+    C011: {7:1  5:0  1:0   }
+    C017: {6:0  5:0  1:1   } -> Done
+        

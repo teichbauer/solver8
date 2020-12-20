@@ -1,0 +1,98 @@
+2020-12-19-0.35
+- based on solver7/0.34
+2020-12-18->0.34
+- Sat.nov class var holding nov. In Sat.verify looping thru vks, make
+  sure vk.bits[0] < Sat.nove - safty guard.
+2020-12-18->0.33
+- VKlause.hit now can test if vk is hit by a sat( lst of tuples)
+- python solver7.py *.sat will verify *.sat file
+2020-12-18->0.32
+- new class Sat for verifying and saving into .sat file
+- VKlause.hit test now also accept v as a list of pairs: (<bit>,<bool-value>)
+- WorkBuffer.build_sats: use the end-node, trace all the way back to root
+  and collecting segment-sats to build a complete sat-array.
+- it works on config1.json, verified, and outputted in verify/config1.sat
+2020-12-17->0.31
+- put satholder in use, workbuffer/build_sats make the final sats
+  still bug: in [(3, 1), (5, 1), (6, 1), (0, 1), (7, 1), (1, 0), (2, 0), (4, 0)]
+  last 2 bits should be (0,0),(1,1), not (0,1),(1,0)!
+  But still big progress.
+- TBD: make solver7/verify_sats
+2020-12-16->0.30
+- introducing SatHolder mechanism. Done incomplete impls: TBD
+2020-12-15->0.29
+- if nov becomes 3, check for sats
+- in makechoice/best_vk1: handle when no g1-vk exists.
+- on level-0 branch, parent is original bitdic. lower brs will
+  have branch as parent.
+2020-12-15->0.28
+- move basic stuff into basics, make_vkdic to bitdic
+- add branch/nov3() for testing nov==3 coverage,... TBD
+2020-12-14->0.27
+- run till" r->(r1, r5, r7) ->{r11, r51} ->{r110 } ->{r1101}
+  r1101: nov==2: C032:{0:0}, C004: {1:0}
+  @ branch.py:65/chdic = self.prepare() having issue @makechoice.py:243
+  max argument empty. I am near to my near goal!
+2020-12-14->0.26
+- vklause now has a method: .value_overshadow(vkx), testing if, in case 
+  self.dic has the same number of, or less bits than vkx, if the value-range 
+  of vkx is already covered by self. this is useful when testing vk1 or
+  later vk2
+2020-12-14->0.25
+- bug fixes.
+- TBD: r7 has issue. It should resolve.
+2020-12-13->0.24
+- refactored wb, bitdic, branch
+2020-12-12->0.23
+- debugging workbuffer
+2020-12-11->0.22
+- design the structure of method on high level
+2020-12-10->0.21
+- move drop as BitDic method to outside of BitDic: drop_bits
+2020-12-10->0.20
+- solve_vk1 in progress
+2020-12-10->0.19
+- choice-dic did not break 3-bit processing, and getting to vk1.
+2020-12-09->0.18
+- progress: best_vk1/2/3 all return a choice-dic, in stead of a list
+2020-12-09->0.17
+- progress on 1. makechoice for vk1, branch/spawnoff1,..
+2020-12-08->0.16
+- branch/pickon_vk1, and more stabs in branch
+2020-12-08->0.15
+- first stage(nov==8 -> nov==5) done
+- vklause adds topbits(), changed mask to value.
+2020-12-07->0.14
+- cnt/cvrs is now a dict keyed by cover-v, value: set of kns
+- branch spawnoff:  hitdic for values hit, and children, for further search
+- manually made b0-1.txt, b0-5.txt b0-7.txt for analysis of child-search
+2020-12-06->0.13
+b0 split to 1,5,7 success
+makechoice/topbits_coverages modified, verified
+2020-12-06->0.12
+makechoice/topbits_coverages
+2020-12-05->0.11
+progress
+2020-12-05->0.10
+progressing
+2020-12-04->0.9
+progress
+2020-12-04->0.8
+choice now has 
+ [(<base-vkname>,..), (<cover-values), g2dic, [g1-list], [g0-list]]
+cretarium: it has the 1. most cover-values, 2. most g2s
+2020-12-03->0.7
+progress: branch.py used in solver7, using bitdic and TxEngine.
+2020-12-03->0.6
+TxEngine, BitDic
+2020-12-02->0.5
+make_choice done
+2020-12-01->0.4
+start working: makechoice
+2020-11-30->0.3
+progress
+2020-11-30->0.2
+makechoice.py - started, not yet finished how to pick the best 3-bits vklause
+2020-11-28->0.1
+New approach: solver7, based on Tx. But this time split into 8 R0..R7
+in stead of 2.
