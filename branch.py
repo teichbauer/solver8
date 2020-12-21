@@ -38,8 +38,8 @@ class Branch:
                 self.name += 't'
                 self.sh.transfer(self.tx)
                 vkdic = self.tx.trans_vkdic(self.init_bitdic.vkdic)
-                print_json(self.init_bitdic.nov, vkdic,
-                           f'verify/{self.name}.json')
+                # print_json(self.init_bitdic.nov, vkdic,
+                #            f'verify/{self.name}.json')
             else:
                 vkdic = self.init_bitdic.vkdic
             self.topbits = vkdic[self.base_vk.kname].get_topbits()

@@ -1,37 +1,56 @@
-from basics import get_bit, get_sdic
+from basics import get_bit, get_sdic, set_bits
+from datetime import datetime
 
 
 class Sat:
-    nov = 0
-
     def __init__(self, end_node_name, pairs):
         pairs.sort(reverse=True)  # for vk.bits is reverse-sorted
         self.pairs = pairs
         self.end_node_name = end_node_name
+        self.cnf_file = ''
+        self.save_dir = 'verify'
 
-    def verify(self, vkdic, sats=None):
+    def get_intv(self):
+        d = {}
+        for p in self.pairs:
+            d[p[0]] = p[1]
+        v = set_bits(0, d)
+        return v
+
+    def verify(self, root_bitdic, sats=None):
         if not sats:
             sats = self.pairs
         if not sats:  # if there is no pair, return True
             return True
         hit = False
-        for kn, vk in vkdic.items():
-            assert(Sat.nove > vk.bits[0])
+        for kn, vk in root_bitdic.vkdic.items():
+            assert(root_bitdic.nov > vk.bits[0])
             hit = vk.hit(self.pairs)
             if hit:  # when hit, it contains a tuple, otherwise it is False
                 print(f'{kn} hits')
-                return False
-        return True
+                return False, None
+        v = self.get_intv()
+        return True, v
 
-    def save2file(self, fname):
+    def save(self, fname=None):
+        now = datetime.now()
+        timestamp = now.isoformat()
+        if not fname:
+            fname = self.save_dir + '/' + self.cnf_file.split('.')[0] + '.sat'
+        nov = len(self.pairs)
+        intv = self.get_intv()
         with open(fname, 'w') as ofile:
+            ofile.write(f'# {timestamp}\n')
             ofile.write('{\n')
+            ofile.write(f'    "configure-name": "{self.cnf_file}",\n')
             ofile.write(f'    "end-node-name": "{self.end_node_name}",\n')
+            ofile.write(f'    "number-of-variables": "{nov}",\n')
             ofile.write(f'    "sats": [\n')
             for sat_tuple in self.pairs:
                 m = str(sat_tuple)
                 ofile.write(f'        {m},\n')
             ofile.write('    ]\n')
+            ofile.write(f'    "integer": {intv},\n')
             ofile.write('}')
 
 

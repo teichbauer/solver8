@@ -24,20 +24,18 @@ def verify_satfile(sat_filename):
     bitdic = make_bitdic('r', cnf_fname)
     sat_dic = eval(open('verify/' + sat_filename).read())
     sat = Sat(sat_dic['end-node-name'], sat_dic['sats'])
-    return sat.verify(bitdic.vkdic)
+    verif, intv = sat.verify(bitdic)
+    return verif, intv
 
 
 def process(cnfname):
     global Root_bitdic
-    # sdic = get_sdic(cnfname)
     wb = WorkBuffer(LAYERS)
     keyname = 'r'
     Root_bitdic = make_bitdic(keyname, cnfname)
-    # Root_bitdic = make_bitdic(sdic, keyname)
 
     satslots = list(range(Root_bitdic.nov))
     sh = SatHolder(satslots)
-    Sat.nov = Root_bitdic.nov
 
     # make root work-buffer work-item, addi it to wb
     witem = (keyname, Root_bitdic, sh)
@@ -53,28 +51,29 @@ def process(cnfname):
 
 if __name__ == '__main__':
     # configfilename = 'config20_80.json'
-    configfilename = 'config1.json'
+    # configfilename = 'config1.json'
     # configfilename = 'config1.sat'
+    configfilename = 'config20_80.sat'
 
     if len(sys.argv) > 1:
         configfilename = sys.argv[1].strip()
 
     if configfilename.endswith('.sat'):
-        result = verify_satfile(configfilename)
+        result, value = verify_satfile(configfilename)
         if result:
-            print(f'Verified.')
+            print(f'Verified: {value}')
         else:
             print('Not verified')
 
     elif configfilename.endswith('.json'):
         sat = process(configfilename)
         if sat:
-            result = sat.verify(Root_bitdic.vkdic)
-            if result:
-                fname = configfilename.split('.')[0] + '.sat'
-                print(f'Found sat and verified. Save in {fname}')
-                sat.save2file(f'verify/{fname}')
-            else:
-                print('No sat found')
+            sat.cnf_file = configfilename
+            # result = sat.verify(Root_bitdic)
+            # if result:
+            print('saved under ' + sat.save_dir)
+            sat.save()  # save to verify/<cnf>.sat
+        else:
+            print('No sat found')
 
     x = 1

@@ -1,5 +1,8 @@
+# 2020-12-21T12:13:30.485738
 {
+    "configure-name": "config1.json",
     "end-node-name": "rt11t0",
+    "number-of-variables": "8",
     "sats": [
         (7, 1),
         (6, 1),
@@ -10,4 +13,5 @@
         (1, 1),
         (0, 0),
     ]
+    "integer": 234,
 }

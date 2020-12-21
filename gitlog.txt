@@ -1,3 +1,6 @@
+2020-12-21->0.39
+- verification not run on normal process. *.sat file now have more info.
+  python solver8.py *.sat will verify the sat in sat file
 2020-12-20->0.38
 - choice returned by BitDic.get_choice now has 3 in the tuple:
   kn, tsvk, tcvk, so that the kn will not be popped from tsvk
