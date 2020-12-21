@@ -1,3 +1,7 @@
+2020-12-20->0.38
+- choice returned by BitDic.get_choice now has 3 in the tuple:
+  kn, tsvk, tcvk, so that the kn will not be popped from tsvk
+- branch.nov3 now uses set ops to simpify. It works.
 2020-12-20->0.37
 - refactored bitdic having new get_choice and best_choice. remove transfer
 - get rid of makechoice.py
