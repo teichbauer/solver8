@@ -84,12 +84,10 @@ class Branch:
         vset = set(range(8))
         hitset = set([])
         for kn, vk in self.init_bitdic.vkdic.items():
-            for v in range(8):
-                if vk.hit(v):
-                    hitset.add(v)
-        sats = vset - hitset
-        if len(sats) > 0:
-            s = sats.pop()  # take first sat
+            ran, out = topbits_coverages(vk, [2, 1, 0])
+            vset = vset - set(ran)
+        if len(vset) > 0:
+            s = vset.pop()  # take first sat
             self.sats = self.sh.get_segment_sats(s)
 
     def get_parent_sats(self):

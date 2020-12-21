@@ -67,7 +67,13 @@ class BitDic:
             for s in sh_sets.values():
                 tsvk = tsvk.intersection(s)
                 tcvk = tcvk.union(s)
-            chc = (tsvk, tcvk)
+            # (<base-kn>, {<share-all>}, {<share-any>})
+            # {<share-all>}: set of kname: vk shares all kn's bits
+            #      a kname/vk here in may have more bits than kn, meaning
+            #      after covered all kn's bits, it still have more bit(s)
+            # {<share-any>}: knames of vk sharing at least 1 bit with kn
+            # {<share-any>} will have <base-kn> and all <share-all> in it
+            chc = (kn, tsvk, tcvk)
             ltsvk = len(tsvk)
             if ltsvk < max_tsleng:
                 continue
@@ -83,7 +89,7 @@ class BitDic:
                 replace = False
                 # only compare with 0-th - the longest, since only
                 # the 0-th is chosen: see if to replace that?
-                if best_choice[0] == tsvk:
+                if best_choice[1] == tsvk:
                     continue
                 if max_tsleng < ltsvk:
                     replace = True
@@ -95,6 +101,7 @@ class BitDic:
                     max_tsleng = ltsvk
                     max_tcleng = ltcvk
         return best_choice
+    # end of def get_choice(self, nob, candikns):
 
     def best_choice(self):
         # find which kn touchs the most other kns
@@ -111,8 +118,8 @@ class BitDic:
 
         choice = self.get_choice(shortest_bitcnt, choices)
 
-        kn = choice[0].pop()
-        touch_set = choice[1]
+        kn = choice[0]
+        touch_set = choice[2]
         notouch_set = allknset - touch_set
         touch_set.remove(kn)
         return kn, touch_set, notouch_set
