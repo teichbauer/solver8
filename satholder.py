@@ -49,8 +49,8 @@ class Sat:
             for sat_tuple in self.pairs:
                 m = str(sat_tuple)
                 ofile.write(f'        {m},\n')
-            ofile.write('    ]\n')
-            ofile.write(f'    "integer": {intv},\n')
+            ofile.write('    ],\n')
+            ofile.write(f'    "integer": {intv}\n')
             ofile.write('}')
 
 

@@ -1,4 +1,5 @@
 import sys
+import time
 from basics import get_sdic
 from bitdic import BitDic, make_vkdic
 from workbuffer import WorkBuffer
@@ -40,7 +41,6 @@ def process(cnfname):
     # make root work-buffer work-item, addi it to wb
     witem = (keyname, Root_bitdic, sh)
     wb.add_item(witem)
-
     while not wb.empty():
         wb = wb.work_thru()
         if type(wb).__name__ == 'Sat':
@@ -53,7 +53,8 @@ if __name__ == '__main__':
     # configfilename = 'config20_80.json'
     # configfilename = 'config1.json'
     # configfilename = 'config1.sat'
-    configfilename = 'config20_80.sat'
+    # configfilename = 'config20_80.sat'
+    configfilename = 'cfg60-262.json'
 
     if len(sys.argv) > 1:
         configfilename = sys.argv[1].strip()
@@ -66,7 +67,9 @@ if __name__ == '__main__':
             print('Not verified')
 
     elif configfilename.endswith('.json'):
+        start_time = time.time()
         sat = process(configfilename)
+        now_time = time.time()
         if sat:
             sat.cnf_file = configfilename
             # result = sat.verify(Root_bitdic)
@@ -75,5 +78,7 @@ if __name__ == '__main__':
             sat.save()  # save to verify/<cnf>.sat
         else:
             print('No sat found')
+        time_used = now_time - start_time
+        print(f'Time used: {time_used}')
 
     x = 1

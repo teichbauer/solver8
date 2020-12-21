@@ -1,3 +1,8 @@
+2020-12-21->0.40
+- cfg100-450 with solver4 was 438 secs returning all sats. Now solver8 return
+  only 1, but use 488 secs.
+  I am disappointed. But using python -m cProfile gave me some insights, for
+  optimization.
 2020-12-21->0.39
 - verification not run on normal process. *.sat file now have more info.
   python solver8.py *.sat will verify the sat in sat file

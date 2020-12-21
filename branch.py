@@ -21,7 +21,10 @@ class Branch:
         self.sats = None
         if len(bitdic.vkdic) == 0:
             # no vk exists: all values in the range are sats
-            self.sats = list(range(2 ** bitdic.nov))
+            sats = list(range(2 ** bitdic.nov))
+            sat = sats[0]
+            # only return single sat from sats
+            self.sats = self.sh.get_segment_sats(sat)
         elif bitdic.nov == 3:
             self.nov3()
         else:
