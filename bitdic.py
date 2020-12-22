@@ -1,6 +1,5 @@
 from basics import *
 from vklause import VKlause
-from visualizer import Visualizer
 from TransKlauseEngine import TxEngine
 
 
@@ -28,7 +27,6 @@ class BitDic:
         for i in range(nov):     # number_of_variables from config
             self.dic[i] = []
         self.add_vklause()
-        self.vis = Visualizer(self.vkdic, self.nov)
     # ==== end of def __init__(..)
 
     def vk1_totality(self, kn1s):  # vkdic1: a vkdic with all 1-bit vks
@@ -67,13 +65,20 @@ class BitDic:
             for s in sh_sets.values():
                 tsvk = tsvk.intersection(s)
                 tcvk = tcvk.union(s)
-            # (<base-kn>, {<share-all>}, {<share-any>})
+
+            # all kn in tsvk with diff nob: remove it from tsvk
+            if nob < 3:
+                tmp = tsvk.copy()
+                for k in tmp:
+                    if self.vkdic[k].nob != nob:
+                        tsvk.remove(k)
+
+            # ( {<share-all>}, {<share-any>} )
             # {<share-all>}: set of kname: vk shares all kn's bits
-            #      a kname/vk here in may have more bits than kn, meaning
-            #      after covered all kn's bits, it still have more bit(s)
+            #      all vk in here must have <nob> bits
             # {<share-any>}: knames of vk sharing at least 1 bit with kn
-            # {<share-any>} will have <base-kn> and all <share-all> in it
-            chc = (kn, tsvk, tcvk)
+            #       it is super-set of tsvk
+            chc = (tsvk, tcvk)
             ltsvk = len(tsvk)
             if ltsvk < max_tsleng:
                 continue
@@ -86,11 +91,10 @@ class BitDic:
                 max_tsleng = ltsvk
                 max_tcleng = ltcvk
             else:
-                replace = False
-                # only compare with 0-th - the longest, since only
-                # the 0-th is chosen: see if to replace that?
-                if best_choice[1] == tsvk:
+                if best_choice[0] == tsvk:
                     continue
+                # see if to replace the best_choice?
+                replace = False
                 if max_tsleng < ltsvk:
                     replace = True
                 elif max_tsleng == ltsvk:
@@ -118,11 +122,11 @@ class BitDic:
 
         choice = self.get_choice(shortest_bitcnt, choices)
 
-        kn = choice[0]
-        touch_set = choice[2]
+        kns, touch_set = choice
         notouch_set = allknset - touch_set
-        touch_set.remove(kn)
-        return kn, touch_set, notouch_set
+        touch_set = touch_set - kns
+        return kns, touch_set, notouch_set, shortest_bitcnt
+    # end of def best_choice(self):
 
     def subvkd(self, bitcnt):  # bitcnt: 1,2 or 3
         # return a vkdic that contains vks with bitcnt many bits
@@ -131,25 +135,23 @@ class BitDic:
             vkd[kn] = self.vkdic[kn]
         return vkd
 
+    def add_vk(self, vkn):
+        vk = self.vkdic[vkn]
+        lst = self.ordered_vkdic.setdefault(vk.nob, [])
+        if vkn not in lst:
+            lst.append(vk.kname)
+        for bit in vk.dic:
+            if vkn not in self.dic[bit]:
+                self.dic[bit].append(vkn)
+        return vk
+    # ---- end of def add_vk(self, vkn):
+
     def add_vklause(self, vk=None):  # add vklause vk into bit-dict
-
-        def add_vk(self, vkn):
-            vclause = self.vkdic[vkn]
-            length = len(vclause.dic)
-            lst = self.ordered_vkdic.setdefault(length, [])
-            if vkn not in lst:
-                lst.append(vclause.kname)
-            for bit in vclause.dic:
-                if vkn not in self.dic[bit]:
-                    self.dic[bit].append(vkn)
-            return vclause
-        # ---- end of def add_vk(self, vkn):
-
         if vk:
-            return add_vk(self, vk)
+            return self.add_vk(vk)
         else:
             for vkn in self.vkdic:
-                add_vk(self, vkn)
+                self.add_vk(vkn)
             return self
     # ==== end of def add_vklause(self, vk=None)
 

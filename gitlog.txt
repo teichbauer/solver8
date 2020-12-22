@@ -1,6 +1,17 @@
+2020-12-22->0.42
+- get rid of visualizr.py, TransKlauseEngine.test_me, vklause.value_overshadow 
+  vklause.set_completion,.position_value, move set_value_and_mask from __init__
+  tp vklause.hit.
+- in BitDic, move add_vk to be a method - no more inside of add_klause
+  All these reduced run tim for cfg100-450.json from 168 secs to 164
+  cProfile time from 260 to 231 secs (see docs/2020-12-21-042=100-450.info)
+- Branch/spawn: check for outdics length==1 and have opposite 0/1: 
+  this branch-child is not to exist
+- BitDic get_choice now returns changed...
 2020-12-21->0.41
 - get rid of nbits in vklause. This reduced cProfile run time for 
   cfg100-450.json from 542secs to 277 sec.
+  see (see docs/2020-12-21-041=100-450.info)
 2020-12-21->0.40
 - cfg100-450 with solver4 was 438(533 secs cProfile) secs returning all sats. 
   Now solver8 return only 1, but use 488(542secs cProfile) secs

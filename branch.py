@@ -28,14 +28,17 @@ class Branch:
         elif bitdic.nov == 3:
             self.nov3()
         else:
-            kn, knset, notouchset = self.init_bitdic.best_choice()
-            if not kn:  # vk1 vks have totality of coverage
+            # kn, knset, notouchset = self.init_bitdic.best_choice()
+            kns, touchset, notouchset, nob = self.init_bitdic.best_choice()
+            if not kns:  # vk1 vks have totality of coverage
                 self.name = 'finished'
                 del self.parent.children[self.valkey]
                 return
 
-            self.base_vk = self.init_bitdic.vkdic[kn]
-            if self.base_vk.get_topbits() != self.base_vk.bits:
+            self.topbits = list(
+                range(bitdic.nov - 1, bitdic.nov - 1 - nob, -1))
+            self.base_vk = self.init_bitdic.vkdic[list(kns)[0]]
+            if self.topbits != self.base_vk.bits:
                 self.tx = TxEngine(self.name, self.base_vk,
                                    self.init_bitdic.nov)
                 self.name += 't'
@@ -45,39 +48,48 @@ class Branch:
                 #            f'verify/{self.name}.json')
             else:
                 vkdic = self.init_bitdic.vkdic
-            self.topbits = vkdic[self.base_vk.kname].get_topbits()
-            self.spawn(knset, notouchset, vkdic)
+            cvrs = []
+            for k in kns:
+                ran, dummy = topbits_coverages(vkdic[k], self.topbits)
+                cvrs.append(ran[0])
+            self.spawn(cvrs, touchset, notouchset, vkdic, nob)
 
-    def spawn(self, knset, notouchset, vkdic):
-        covers, dum = topbits_coverages(
-            vkdic[self.base_vk.kname], self.topbits)
-        self.hitvalue = covers[0]
-        cutn = len(self.topbits)
+    def spawn(self, cvrs, touchset, notouchset, vkdic, cutn):
         new_nov = self.init_bitdic.nov - cutn
         for ind in range(2 ** cutn):
-            if ind == self.hitvalue:
+            if ind in cvrs:
                 continue
             vkd = {}
             total_coverage = False
             for kn in notouchset:  # no-touches are in each child-bitdic
                 vkd[kn] = vkdic[kn].clone(self.topbits)
-            for kn in knset:
+            out1s = []       # save all leng==1 outdics, for block check
+            blocked = False  # blocked:2 in out1s on the same bit, with 0 and 1
+            for kn in touchset:
                 vrng, outdic = topbits_coverages(vkdic[kn], self.topbits)
                 if ind in vrng:
-                    # if len(vrng)==1 and ind == vrng[0], and outdic empty
-                    # then this kn covers all child-values
-                    if len(vrng) == 1 and len(outdic) == 0:
-                        total_coverage = True
+                    # save lengt==1 outdic in out1s list
+                    # if any 2 outdics have the same key(bit) and
+                    # opposite value: then this ind is blocked: no child
+                    care = (outdic not in out1s) and (len(outdic) == 1)
+                    if care:
+                        for d in out1s:
+                            if d.keys() == outdic.keys():
+                                if d.values() != outdic.values():
+                                    blocked = True
+                                    break
+                        out1s.append(outdic)
+                    if blocked:
+                        self.children.pop(ind, None)
                         break
                     else:
-                        # > 1: partially covered: into child
-                        # vkd[kn].dic must be the same as outdic
                         vkd[kn] = vkdic[kn].clone(self.topbits)
-            if not total_coverage:
+            if not blocked:
                 self.children[ind] = (
                     BitDic(f'{self.name}{ind}', vkd, new_nov),
                     self.sh.spawn_tail(cutn)
                 )
+
         self.sh.cut_tail(cutn)
         if len(self.children) == 0:
             self.name = 'finished'

@@ -5,7 +5,7 @@ from bitdic import BitDic, make_vkdic
 from workbuffer import WorkBuffer
 from satholder import SatHolder, Sat
 
-LAYERS = []  # [{'r': {0: bitdic}}]
+LAYERS = []
 Root_bitdic = None
 
 
@@ -46,7 +46,6 @@ def process(cnfname):
         if type(wb).__name__ == 'Sat':
             return wb
     return None
-    x = 1   # debug stop
 
 
 if __name__ == '__main__':

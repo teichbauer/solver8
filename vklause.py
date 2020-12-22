@@ -9,39 +9,20 @@ class VKlause:
         '''
     # nov not used - remove it?
 
-    def __init__(self, kname, dic, nov, origin=None):
+    def __init__(self, kname, dic, nov):
         self.kname = kname    # this vk can be a partial one: len(bits) < 3)
-        self.origin = origin  # ref to original vk (with 3 bits)
         self.dic = dic  # { 7:1, 3: 0, 0: 1}, or {3:0, 1:1} or {3:1}
         self.nov = nov  # number of variables (here: 8) - bits of value space
         # all bits, in descending order
         self.bits = sorted(list(dic.keys()), reverse=True)  # [7,3,0]
         # void bits of the nov-bits
-        bs = list(range(nov))  # all bits 0..nov in ascending order
         self.nob = len(self.bits)             # 1, 2 or 3
-        self.set_value_and_mask()
-        self.completion = 3  # can be: p1 (1 from 3), or p2 (2 of 3)
-
-    def set_completion(self, cmpl):
-        self.completion = cmpl
 
     def modify_keybit(self, old_bit, new_bit):
         if old_bit in self.bits:
             v = self.dic.pop(old_bit)
             self.dic[new_bit] = v
             self.bits = sorted(list(dic.keys()), reverse=True)  # [7,3,0]
-
-    def value_overshadow(self, vkx):
-        ''' if self.dic has less bits than vkx's bits, and the vkx sits
-            on every bit of self.dic with the same values, then, vkx
-            is over-shadowed by self - all values covered by vkx, is already
-            covered by this(self) vk.
-            This is not possible if vkx has more bits than this vk.
-            '''
-        result = len(set(self.bits) - set(vkx.bits)) == 0
-        for b in self.bits:
-            result = result and vkx.dic[b] == self.dic[b]
-        return result
 
     def clone(self, bits2b_dropped=None):
         # bits2b_dropped: list of bits to be dropped.
@@ -76,18 +57,10 @@ class VKlause:
         self.value = value
         self.mask = mask
 
-    def get_topbits(self):
-        # for nov == 8, nob == 3, return [7,6,5]
-        # for nov == 12, nob == 2, return [11,10]
-        return list(range(self.nov - 1, self.nov - 1 - self.nob, -1))
-
-    def position_value(self):
-        ''' regardless v be 0 or 1, set the bit 1
-            For I am caring only the position of the bits  '''
-        return self.mask
-
     def hit(self, v):  # hit means here: v let this klause turn False
         if type(v) == type(1):
+            if 'mask' not in self.__dict__:
+                self.set_value_and_mask()
             fv = self.mask & v
             return not bool(self.value ^ fv)
         elif type(v) == type([]):  # sat-list of [(b,v),...]

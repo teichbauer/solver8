@@ -1,4 +1,3 @@
-from visualizer import Visualizer
 from vklause import VKlause
 from basics import get_bit, set_bit
 
@@ -124,46 +123,6 @@ class TxEngine:
         msg += 'txn: ' + str(self.txs) + ', '
         msg += '-'*60
         return msg
-
-    def test_me(self, vkdic):
-        ''' 1. transfer vkdic -> nvkdic
-            2. for v in v-range,
-               if v is hit for some clauses cset, then
-               tx(v must be hit for tx(cset))
-            '''
-        nvkdic = self.trans_vkdic(vkdic)
-
-        vdic = {}
-        vhit_dic = {}
-        sat = []
-        sat0 = []
-        N = 2 ** self.nov
-        for v in range(N):
-            nv = self.trans_value(v)
-            hit = False
-            hit0 = False
-
-            hset0 = set([])
-            for kn, vk in vkdic.items():
-                if vk.hit(v):
-                    hset0.add(kn)
-                    hit0 = True
-            if not hit0:
-                sat0.append(v)
-
-            hset = set([])
-            for kn, vk in nvkdic.items():
-                if vk.hit(nv):
-                    hset.add(kn)
-                    hit = True
-            if not hit:
-                sat.append(nv)
-
-            if hset0 != hset:
-                debug = 1
-                print(f'Tx test failed on: {v}')
-                return False
-        return True, sat, sat0
 
 
 if __name__ == '__main__':
