@@ -1,6 +1,10 @@
+2020-12-21->0.41
+- get rid of nbits in vklause. This reduced cProfile run time for 
+  cfg100-450.json from 542secs to 277 sec.
 2020-12-21->0.40
-- cfg100-450 with solver4 was 438 secs returning all sats. Now solver8 return
-  only 1, but use 488 secs.
+- cfg100-450 with solver4 was 438(533 secs cProfile) secs returning all sats. 
+  Now solver8 return only 1, but use 488(542secs cProfile) secs
+  (see docs/2020-12-21-040=100-450.info)
   I am disappointed. But using python -m cProfile gave me some insights, for
   optimization.
 2020-12-21->0.39

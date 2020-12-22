@@ -51,10 +51,10 @@ def process(cnfname):
 
 if __name__ == '__main__':
     # configfilename = 'config20_80.json'
-    # configfilename = 'config1.json'
+    configfilename = 'config1.json'
     # configfilename = 'config1.sat'
     # configfilename = 'config20_80.sat'
-    configfilename = 'cfg60-262.json'
+    # configfilename = 'cfg60-262.json'
 
     if len(sys.argv) > 1:
         configfilename = sys.argv[1].strip()

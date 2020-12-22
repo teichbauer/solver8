@@ -18,8 +18,6 @@ class VKlause:
         self.bits = sorted(list(dic.keys()), reverse=True)  # [7,3,0]
         # void bits of the nov-bits
         bs = list(range(nov))  # all bits 0..nov in ascending order
-        # nbits are in ascending order.
-        self.nbits = [b for b in bs if b not in self.bits]  # [1,2,4,5,6]
         self.nob = len(self.bits)             # 1, 2 or 3
         self.set_value_and_mask()
         self.completion = 3  # can be: p1 (1 from 3), or p2 (2 of 3)
@@ -103,52 +101,3 @@ class VKlause:
             # in_v==True:  every pair in dic is in v
             # in_v==False: at least one p not in v
             return in_v
-
-    def hit_valuelist(self):
-        hits = []
-        nbs = sorted(self.nbits, reverse=True)
-        L = len(nbs)
-        for x in range(2**L):
-            d = {}
-            for i in range(L):
-                d[nbs[i]] = get_bit(x, i)
-            hits.append(set_bits(self.value, d))
-        return hits
-
-
-def hit_values():
-    d = {5: 1, 3: 0, 2: 1}
-    vk = VKlause('name', d, 6)
-    hits = vk.hit_valuelist()
-
-
-def test_hit_valuelist():
-    dics = [
-        {2: 0, 1: 0, 0: 0},  # hvs: [0]
-        {2: 1, 1: 0, 0: 0},  # hvs: [4]
-        {2: 0, 1: 1, 0: 0},  # hvs: [2]
-        {2: 0, 1: 1, 0: 1},  # hvs: [3]
-        {2: 0, 1: 0},       # hvs: [0,1]
-        {2: 1, 1: 0},       # hvs: [4,5]
-        {2: 1, 1: 1},       # hvs: [6,7]
-        {2: 0, 1: 1},       # hvs: [2,3]
-        {2: 0},   # hvs: [1,2,3,4]
-        {2: 1},   # hvs: [4,5,6,7]
-        {1: 0},   # hvs: [1,3,5,7]
-        {1: 1},   # hvs: [1,3,5,7]
-        {0: 0},   # hvs: [1,3,5,7]
-        {0: 1}    # hvs: [1,3,5,7]
-    ]
-    for dic in dics:
-        vk = VKlause('test-vk', dic, 3)
-        hvs = vk.hit_valuelist()
-        dic_str = str(dic)
-        hvs_str = str(hvs)
-        print(f'dic: {dic_str}: {hvs_str}')
-        x = 1
-# ------- end of def test_hit_valuelist():
-
-
-if __name__ == '__main__':
-    # test_hit_valuelist()
-    hit_values()

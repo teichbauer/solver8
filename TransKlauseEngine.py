@@ -4,10 +4,10 @@ from basics import get_bit, set_bit
 
 
 class TxEngine:
-    """ move base_klause's bits to the left-most top positions, 
-        assign the transfered klause to self.klause. 
-        While doing this, set up operators so that any 
-        klause will be transfered to a new klause compatible to 
+    """ move base_klause's bits to the left-most top positions,
+        assign the transfered klause to self.klause.
+        While doing this, set up operators so that any
+        klause will be transfered to a new klause compatible to
         self.klause
         """
 
@@ -26,10 +26,11 @@ class TxEngine:
         bits = self.start_vklause.bits[:]
         # all bits 0..nov in ascending order.
         # later, the topbits removed, will be nbit's target-bits
-        allbits = [b for b in range(self.nov)]
+        L = len(bits)                           # number of target-bits
+        allbits = list(range(self.nov))
+        lefts = allbits[:]
 
         # target/left-most bits(names)
-        L = len(bits)                           # number of target-bits
         hi_bits = list(reversed(allbits))[:L]   # target-bits
 
         # transfer for bits to high-bits
@@ -40,15 +41,12 @@ class TxEngine:
             self.txs.append((b, h))
             new_dic[h] = self.start_vklause.dic[b]
             allbits.remove(h)  # target-bit consumed/removed
+            lefts.remove(b)
 
-        # setup the transfer-tuples for start_vklause.nbits
-        vk = self.start_vklause
-        # safty check: vk.nbits are the not-used bits from vk
-        # there should be the same many as in allbits, with tops bits removed.
-        if len(allbits) != len(vk.nbits):
-            assert(False), "bits-length wrong"
-        for i in range(len(vk.nbits)):
-            self.txs.append((vk.nbits[i], allbits[i]))
+        nblen = self.nov - L
+        assert(len(allbits) == nblen)
+        for i in range(nblen):
+            self.txs.append((lefts[i], allbits[i]))
 
         # now tx the start_vklause to be self.vklause
         self.vklause = VKlause(
