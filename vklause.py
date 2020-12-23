@@ -18,12 +18,6 @@ class VKlause:
         # void bits of the nov-bits
         self.nob = len(self.bits)             # 1, 2 or 3
 
-    def modify_keybit(self, old_bit, new_bit):
-        if old_bit in self.bits:
-            v = self.dic.pop(old_bit)
-            self.dic[new_bit] = v
-            self.bits = sorted(list(dic.keys()), reverse=True)  # [7,3,0]
-
     def clone(self, bits2b_dropped=None):
         # bits2b_dropped: list of bits to be dropped.
         # They must be the top-bits

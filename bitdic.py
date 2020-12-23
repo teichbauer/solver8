@@ -118,7 +118,7 @@ class BitDic:
         if shortest_bitcnt == 1:
             totality = self.vk1_totality(choices)
             if totality:
-                return None, None, None
+                return None, None, None, None
 
         choice = self.get_choice(shortest_bitcnt, choices)
 

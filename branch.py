@@ -5,34 +5,38 @@ from satholder import SatHolder
 
 
 class Branch:
+    LAYERS = []
+
     def __init__(self, bitdic,  # starting bitdic
-                 depth,         # depth in node-dic/search tree
-                 val_key,       # value-index from parent children-keys
+                 depth,         # layer-depth in Branch.LAYERS
+                 index,         # original index in layer
+                 valkey,        # value-index from parent children-keys
                  parent,        # parent-branch, if depth==0, root-bitdic)
                  satholder):    # sat slot-holder
         self.depth = depth
-        self.name = bitdic.name
-        self.valkey = val_key
+        self.name = f'{depth}-{index}'
+        self.valkey = valkey
         self.parent = parent
         self.init_bitdic = bitdic
         self.tx = None
         self.children = {}
         self.sh = satholder
         self.sats = None
+        # print(f'making {self.name}')
         if len(bitdic.vkdic) == 0:
             # no vk exists: all values in the range are sats
             sats = list(range(2 ** bitdic.nov))
             sat = sats[0]
             # only return single sat from sats
             self.sats = self.sh.get_segment_sats(sat)
+            self.name = 'finished'
         elif bitdic.nov == 3:
             self.nov3()
         else:
             # kn, knset, notouchset = self.init_bitdic.best_choice()
             kns, touchset, notouchset, nob = self.init_bitdic.best_choice()
             if not kns:  # vk1 vks have totality of coverage
-                self.name = 'finished'
-                del self.parent.children[self.valkey]
+                self.suicide()
                 return
 
             self.topbits = list(
@@ -41,7 +45,7 @@ class Branch:
             if self.topbits != self.base_vk.bits:
                 self.tx = TxEngine(self.name, self.base_vk,
                                    self.init_bitdic.nov)
-                self.name += 't'
+                # self.name += 't'
                 self.sh.transfer(self.tx)
                 vkdic = self.tx.trans_vkdic(self.init_bitdic.vkdic)
                 # print_json(self.init_bitdic.nov, vkdic,
@@ -53,18 +57,16 @@ class Branch:
                 ran, dummy = topbits_coverages(vkdic[k], self.topbits)
                 cvrs.append(ran[0])
             self.spawn(cvrs, touchset, notouchset, vkdic, nob)
+    # end of def __init__
 
     def spawn(self, cvrs, touchset, notouchset, vkdic, cutn):
         new_nov = self.init_bitdic.nov - cutn
         for ind in range(2 ** cutn):
             if ind in cvrs:
                 continue
-            vkd = {}
-            total_coverage = False
-            for kn in notouchset:  # no-touches are in each child-bitdic
-                vkd[kn] = vkdic[kn].clone(self.topbits)
+            vkd = {kn: vkdic[kn].clone(self.topbits) for kn in notouchset}
             out1s = []       # save all leng==1 outdics, for block check
-            blocked = False  # blocked:2 in out1s on the same bit, with 0 and 1
+            total_coverage = False  # 2 in out1s on the same bit, with 0 and 1
             for kn in touchset:
                 vrng, outdic = topbits_coverages(vkdic[kn], self.topbits)
                 if ind in vrng:
@@ -76,24 +78,28 @@ class Branch:
                         for d in out1s:
                             if d.keys() == outdic.keys():
                                 if d.values() != outdic.values():
-                                    blocked = True
+                                    total_coverage = True
                                     break
                         out1s.append(outdic)
-                    if blocked:
+                    if total_coverage:
                         self.children.pop(ind, None)
                         break
                     else:
                         vkd[kn] = vkdic[kn].clone(self.topbits)
-            if not blocked:
-                self.children[ind] = (
-                    BitDic(f'{self.name}{ind}', vkd, new_nov),
-                    self.sh.spawn_tail(cutn)
-                )
+            if not total_coverage:
+                self.children[ind] = {
+                    'bitdic': BitDic('', vkd, new_nov),
+                    'depth': self.depth + 1,
+                    # 'index' missing here. Will be added by WorkBuffer
+                    'valkey': ind,
+                    'parent': self,
+                    'sh': SatHolder(self.sh.spawn_tail(cutn))
+                }
 
         self.sh.cut_tail(cutn)
         if len(self.children) == 0:
-            self.name = 'finished'
-            del self.parent.children[self.valkey]
+            self.suicide()
+    # end of def spawn(self, cvrs, touchset, notouchset, vkdic, cutn):
 
     def nov3(self):
         vset = set(range(8))
@@ -104,6 +110,19 @@ class Branch:
         if len(vset) > 0:
             s = vset.pop()  # take first sat
             self.sats = self.sh.get_segment_sats(s)
+        else:
+            self.suicide()
+
+    def suicide(self):
+        if self.depth > 0:  # root-level branch cannot die
+            # print(f'Gone: {self.name}')
+            # remove self from Branch.LAYERS
+            Branch.LAYERS[self.depth].pop(self.name, None)
+            # remove me as child from parent
+            self.parent.children.pop(self.valkey, None)
+            # parent has no more child -> parent die
+            if len(self.parent.children) == 0:
+                self.parent.suicide()
 
     def get_parent_sats(self):
         lst = []

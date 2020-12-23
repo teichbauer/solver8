@@ -1,9 +1,15 @@
+2020-12-22->0.43
+- Tx: txs no more a list of tuples, but dict. get rid of trans_value 
+  reverse_value stuff.
+- use class variable Branch.LAYERS for holde the tree
+- cfg100-450.json failed to have result - debugging
 2020-12-22->0.42
 - get rid of visualizr.py, TransKlauseEngine.test_me, vklause.value_overshadow 
   vklause.set_completion,.position_value, move set_value_and_mask from __init__
   tp vklause.hit.
 - in BitDic, move add_vk to be a method - no more inside of add_klause
-  All these reduced run tim for cfg100-450.json from 168 secs to 164
+  All these reduced run ti
+  m for cfg100-450.json from 168 secs to 164
   cProfile time from 260 to 231 secs (see docs/2020-12-21-042=100-450.info)
 - Branch/spawn: check for outdics length==1 and have opposite 0/1: 
   this branch-child is not to exist

@@ -5,7 +5,7 @@ from bitdic import BitDic, make_vkdic
 from workbuffer import WorkBuffer
 from satholder import SatHolder, Sat
 
-LAYERS = []
+# LAYERS = []
 Root_bitdic = None
 
 
@@ -31,7 +31,7 @@ def verify_satfile(sat_filename):
 
 def process(cnfname):
     global Root_bitdic
-    wb = WorkBuffer(LAYERS)
+    wb = WorkBuffer()
     keyname = 'r'
     Root_bitdic = make_bitdic(keyname, cnfname)
 
@@ -39,7 +39,15 @@ def process(cnfname):
     sh = SatHolder(satslots)
 
     # make root work-buffer work-item, addi it to wb
-    witem = (keyname, Root_bitdic, sh)
+    witem = {  # root-node
+        'bitdic': Root_bitdic,
+        'depth': 0,             # layer-depth
+        'index': 0,             # layer-index
+        'valkey': 0,
+        'parent': Root_bitdic,  # parent-br. For root: bitdic
+        'sh': sh
+    }
+    # witem = (keyname, Root_bitdic, sh)
     wb.add_item(witem)
     while not wb.empty():
         wb = wb.work_thru()
@@ -49,8 +57,9 @@ def process(cnfname):
 
 
 if __name__ == '__main__':
-    # configfilename = 'config20_80.json'
-    configfilename = 'config1.json'
+    # configfilename = 'cfg100-450.json'
+    configfilename = 'cfg60-262.json'
+    # configfilename = 'config1.json'
     # configfilename = 'config1.sat'
     # configfilename = 'config20_80.sat'
     # configfilename = 'cfg60-262.json'

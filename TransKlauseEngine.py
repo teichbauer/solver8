@@ -17,7 +17,7 @@ class TxEngine:
         self.ame = name
         self.start_vklause = base_vklause
         self.nov = nov
-        self.txs = []   # list of exchange-tuple(pairs)
+        self.txs = {}
         self.setup_tx()
 
     def setup_tx(self):
@@ -37,7 +37,7 @@ class TxEngine:
         while len(bits) > 0:
             b = bits.pop(0)
             h = hi_bits.pop(0)
-            self.txs.append((b, h))
+            self.txs[b] = h
             new_dic[h] = self.start_vklause.dic[b]
             allbits.remove(h)  # target-bit consumed/removed
             lefts.remove(b)
@@ -45,7 +45,7 @@ class TxEngine:
         nblen = self.nov - L
         assert(len(allbits) == nblen)
         for i in range(nblen):
-            self.txs.append((lefts[i], allbits[i]))
+            self.txs[lefts[i]] = allbits[i]
 
         # now tx the start_vklause to be self.vklause
         self.vklause = VKlause(
@@ -54,28 +54,19 @@ class TxEngine:
 
     def trans_varray(self, varray):
         assert(self.nov == len(varray))
-        lst = list(range(self.nov))
-        for ts in self.txs:
-            lst[ts[1]] = varray[ts[0]]
+        lst = varray[:]
+        for fr, to in self.txs.items():
+            lst[to] = varray[fr]
         return lst
 
     def trans_klause(self, vklause):
         # transfered vk still have the same kname
         tdic = {}
-        for t in self.txs:
-            if t[0] in vklause.dic:
-                tdic[t[1]] = vklause.dic[t[0]]
+        for b, v in vklause.dic.items():
+            tdic[self.txs[b]] = v
         return VKlause(vklause.kname, tdic, self.nov)
 
     # ----- end of trans_klause
-
-    def trans_value(self, v):
-        new_v = v
-        for t in self.txs:
-            fb, tb = t  # get from-bit, to-bit from t
-            bv = get_bit(v, fb)
-            new_v = set_bit(new_v, tb, bv)
-        return new_v
 
     def trans_vkdic(self, vkdic):
         vdic = {}
@@ -85,27 +76,6 @@ class TxEngine:
             else:
                 vdic[kn] = self.trans_klause(vk)
         return vdic
-
-    def reverse_value(self, v):
-        # v -> new_v
-        new_v = v
-        for t in self.txs:
-            fb, tb = t  # get from-bit, to-bit from t
-            bv = get_bit(v, tb)
-            new_v = set_bit(new_v, fb, bv)
-        return new_v
-
-    def reverse_values(self, vs):
-        res = []
-        for v in vs:
-            res.append(self.reverse_value(v))
-        return res
-
-    def trans_values(self, vs):
-        res = []
-        for v in vs:
-            res.append(self.trans_value(v))
-        return res
 
     def trans_bitdic(self, bitdic):
         new_vkdic = self.trans_vkdic(bitdic.vkdic)
