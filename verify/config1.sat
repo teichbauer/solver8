@@ -1,7 +1,7 @@
-# 2020-12-21T19:12:55.998212
+# 2020-12-24T00:26:43.978337
 {
     "configure-name": "config1.json",
-    "end-node-name": "rt11t0",
+    "end-node-name": "3-0",
     "number-of-variables": "8",
     "sats": [
         (7, 1),

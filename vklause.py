@@ -29,7 +29,10 @@ class VKlause:
                 # drop off this bit from dic.
                 # None: in case b not in dic, it will not cause key-error
                 dic.pop(b, None)
-        return VKlause(self.kname, dic, new_nov)
+        if len(dic):
+            return VKlause(self.kname, dic, new_nov)
+        else:
+            return None
 
     def set_value_and_mask(self):
         ''' For the example klause { 7:1,  5:0,     2:1      }

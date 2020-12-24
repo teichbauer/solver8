@@ -1,3 +1,7 @@
+2020-12-24->0.45
+- found bugs: 1. Tx: wrong generated odd number of txs? fixed: using set ops
+- vklause.clone(drops) can return empty vk.dic, in that case, not adding to vkd.
+- cfg100-450 now uses 113 secs. Much better now, but still room to optimise.
 2020-12-23->0.44
 - branch/spawn untouchset vks will not be txed: no need to clone for every
   child bitdic. Share them will save some run.

@@ -43,8 +43,7 @@ class Branch:
                 range(bitdic.nov - 1, bitdic.nov - 1 - nob, -1))
             self.base_vk = self.init_bitdic.vkdic[list(kns)[0]]
             if self.topbits != self.base_vk.bits:
-                self.tx = TxEngine(self.name, self.base_vk,
-                                   self.init_bitdic.nov)
+                self.tx = TxEngine(self.base_vk, self.init_bitdic.nov)
                 # self.name += 't'
                 self.sh.transfer(self.tx)
                 vkdic = self.tx.trans_vkdic(self.init_bitdic.vkdic)
@@ -61,11 +60,12 @@ class Branch:
 
     def spawn(self, cvrs, touchset, notouchset, vkdic, cutn):
         new_nov = self.init_bitdic.nov - cutn
+        if self.name == '12-168':
+            x = 1
         vkd0 = {kn: vkdic[kn].clone(self.topbits) for kn in notouchset}
         for ind in range(2 ** cutn):
             if ind in cvrs:
                 continue
-            # vkd = {kn: vkdic[kn].clone(self.topbits) for kn in notouchset}
             vkd = vkd0.copy()
             out1s = []       # save all leng==1 outdics, for block check
             total_coverage = False  # 2 in out1s on the same bit, with 0 and 1
@@ -87,7 +87,10 @@ class Branch:
                         self.children.pop(ind, None)
                         break
                     else:
-                        vkd[kn] = vkdic[kn].clone(self.topbits)
+                        cutvk = vkdic[kn].clone(self.topbits)
+                        # put in only if cutvk not empty after dropped topbits
+                        if cutvk:
+                            vkd[kn] = cutvk
             if not total_coverage:
                 self.children[ind] = {
                     'bitdic': BitDic('', vkd, new_nov),

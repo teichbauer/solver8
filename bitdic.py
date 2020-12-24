@@ -23,11 +23,20 @@ class BitDic:
         self.vkdic = vkdic
         self.parent = None       # the parent that generated / tx-to self
         self.done = False
-        self.ordered_vkdic = {}  # 3 list of vdics, keyed by number of bits
+        # 3 list of vk-names
+        self.ordered_vkdic = {1: [], 2: [], 3: []}
         for i in range(nov):     # number_of_variables from config
             self.dic[i] = []
         self.add_vklause()
     # ==== end of def __init__(..)
+
+    def minlength(self):
+        if len(self.ordered_vkdic[1]) > 0:
+            return 1
+        if len(self.ordered_vkdic[2]) > 0:
+            return 2
+        if len(self.ordered_vkdic[3]) > 0:
+            return 3
 
     def vk1_totality(self, kn1s):  # vkdic1: a vkdic with all 1-bit vks
         for ind, kn in enumerate(kn1s):
@@ -60,6 +69,9 @@ class BitDic:
             for b in vk.bits:
                 sh_sets[b] = set(self.dic[b])
             # pop a value of sh_sets: a set of kns
+            if len(sh_sets) == 0:
+                raise Exception("444")
+
             tsvk = set(sh_sets.popitem()[1])
             tcvk = tsvk.copy()
             for s in sh_sets.values():
@@ -113,7 +125,7 @@ class BitDic:
         candidates = {}  # {<kn>:set([kn-touched]),..}
         allknset = set(self.vkdic.keys())
 
-        shortest_bitcnt = min(list(self.ordered_vkdic.keys()))
+        shortest_bitcnt = self.minlength()
         choices = self.ordered_vkdic[shortest_bitcnt]
         if shortest_bitcnt == 1:
             totality = self.vk1_totality(choices)
@@ -137,9 +149,12 @@ class BitDic:
 
     def add_vk(self, vkn):
         vk = self.vkdic[vkn]
-        lst = self.ordered_vkdic.setdefault(vk.nob, [])
-        if vkn not in lst:
-            lst.append(vk.kname)
+        # assert(vk.nob > 0), f'{vk.kname} has no bit'
+        if vk.bits == []:
+            raise Exception("333")
+
+        if vkn not in self.ordered_vkdic[vk.nob]:
+            self.ordered_vkdic[vk.nob].append(vk.kname)
         for bit in vk.dic:
             if vkn not in self.dic[bit]:
                 self.dic[bit].append(vkn)

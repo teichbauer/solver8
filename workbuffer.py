@@ -102,6 +102,7 @@ class WorkBuffer:
                     item['index'] = index  # adding index to each
 
                 # debugging purpose
+                # debug = True
                 debug = False
                 if debug:
                     level = len(Branch.LAYERS)
@@ -110,7 +111,7 @@ class WorkBuffer:
                         print(f'layer[{level -1}] has {last_br_count}')
                     print(f'level {level} has {len(self.buffer)} items\n')
 
-                    if level == 3:
+                    if level == 15:
                         x = 1
 
                 return self

@@ -11,45 +11,37 @@ class TxEngine:
         """
 
     def __init__(self,
-                 name,          # (1) name of the tx
+                 #  name,          # (1) name of the tx
                  base_vklause,  # (2) inst of VKlause 2b transfered to lm
                  nov):          # (3) number of bits in value-space
-        self.ame = name
+        # self.ame = name
         self.start_vklause = base_vklause
         self.nov = nov
         self.txs = {}
         self.setup_tx()
 
     def setup_tx(self):
-        # clone of vk.bits (they are in descending order from VKlause)
-        bits = self.start_vklause.bits[:]
-        # all bits 0..nov in ascending order.
-        # later, the topbits removed, will be nbit's target-bits
-        L = len(bits)                           # number of target-bits
-        allbits = list(range(self.nov))
-        lefts = allbits[:]
+        # set of vk.bits
+        bits = set(self.start_vklause.bits)
+        # target bits
+        hi_bits = set(range(self.nov - 1, self.nov - 1 - len(bits), -1))
 
-        # target/left-most bits(names)
-        hi_bits = list(reversed(allbits))[:L]   # target-bits
+        targets = sorted(list(hi_bits - bits))
+        source = sorted(list(bits - hi_bits))
 
         # transfer for bits to high-bits
-        new_dic = {}
-        while len(bits) > 0:
-            b = bits.pop(0)
-            h = hi_bits.pop(0)
+        while len(targets) > 0:
+            b = source.pop()
+            h = targets.pop()
             self.txs[b] = h
-            new_dic[h] = self.start_vklause.dic[b]
-            allbits.remove(h)  # target-bit consumed/removed
-            lefts.remove(b)
+            self.txs[h] = b
+        # print(str(self.txs))
+        L = len(self.txs)
+        if L % 2 == 1:
+            raise Exception("111")
 
-        nblen = self.nov - L
-        assert(len(allbits) == nblen)
-        for i in range(nblen):
-            self.txs[lefts[i]] = allbits[i]
-
-        # now tx the start_vklause to be self.vklause
-        self.vklause = VKlause(
-            self.start_vklause.kname, new_dic, self.nov)
+        # tx the start_vklause to be self.vklause
+        self.vklause = self.trans_klause(self.start_vklause)
     # ----- end of def setup_tx(self, hi_bits=None)
 
     def trans_varray(self, varray):
@@ -63,7 +55,12 @@ class TxEngine:
         # transfered vk still have the same kname
         tdic = {}
         for b, v in vklause.dic.items():
-            tdic[self.txs[b]] = v
+            if b in self.txs:
+                tdic[self.txs[b]] = v
+            else:
+                tdic[b] = v
+        if len(tdic) == 0:
+            raise Exception("222")
         return VKlause(vklause.kname, tdic, self.nov)
 
     # ----- end of trans_klause
