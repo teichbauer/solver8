@@ -110,7 +110,7 @@ class WorkBuffer:
                         print(f'layer[{level -1}] has {last_br_count}')
                     print(f'level {level} has {len(self.buffer)} items\n')
 
-                    if level == 46:
+                    if level == 3:
                         x = 1
 
                 return self

@@ -61,10 +61,12 @@ class Branch:
 
     def spawn(self, cvrs, touchset, notouchset, vkdic, cutn):
         new_nov = self.init_bitdic.nov - cutn
+        vkd0 = {kn: vkdic[kn].clone(self.topbits) for kn in notouchset}
         for ind in range(2 ** cutn):
             if ind in cvrs:
                 continue
-            vkd = {kn: vkdic[kn].clone(self.topbits) for kn in notouchset}
+            # vkd = {kn: vkdic[kn].clone(self.topbits) for kn in notouchset}
+            vkd = vkd0.copy()
             out1s = []       # save all leng==1 outdics, for block check
             total_coverage = False  # 2 in out1s on the same bit, with 0 and 1
             for kn in touchset:

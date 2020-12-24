@@ -1,3 +1,6 @@
+2020-12-23->0.44
+- branch/spawn untouchset vks will not be txed: no need to clone for every
+  child bitdic. Share them will save some run.
 2020-12-22->0.43
 - Tx: txs no more a list of tuples, but dict. get rid of trans_value 
   reverse_value stuff.
