@@ -3,18 +3,14 @@ from basics import get_bit, set_bit
 
 
 class TxEngine:
-    """ move base_klause's bits to the left-most top positions,
-        assign the transfered klause to self.klause.
-        While doing this, set up operators so that any
-        klause will be transfered to a new klause compatible to
-        self.klause
+    """ move base_klause's bits to the top positions as [7,6,5] from 
+        [0,1,2,3,4,5,6,7] assign the transfered klause to self.klause.
+        While doing this, set up operators so that any klause will be 
+        transfered to a new klause compatible to self.klause
         """
 
-    def __init__(self,
-                 #  name,          # (1) name of the tx
-                 base_vklause,  # (2) inst of VKlause 2b transfered to lm
-                 nov):          # (3) number of bits in value-space
-        # self.ame = name
+    def __init__(self, base_vklause,  # inst of VKlause 2b transfered to the
+                 nov):                # highst bits in nov-bits
         self.start_vklause = base_vklause
         self.nov = nov
         self.txs = {}

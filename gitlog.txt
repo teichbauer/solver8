@@ -1,3 +1,5 @@
+2020-12-25->0.45
+- minor polish, before branching off to solver9
 2020-12-24->0.45
 - found bugs: 1. Tx: wrong generated odd number of txs? fixed: using set ops
 - vklause.clone(drops) can return empty vk.dic, in that case, not adding to vkd.
